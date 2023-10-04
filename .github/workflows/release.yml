@@ -1,0 +1,19 @@
+name: PKG Release
+
+on:
+  push:
+    branches: [ main ]
+env:
+  GOLANG_VERSION: 1.21.1
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
+      release_created: ${{ steps.release-please.outputs.release_created }}
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: "release-please"
+        with:
+          release-type: go

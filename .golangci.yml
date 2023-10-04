@@ -1,0 +1,9 @@
+# See https://golangci-lint.run/ for details
+run:
+  go: '1.21'
+  skip-dirs:
+    - .*/mocks/.*\.go
+linters:
+  enable:
+    - goimports
+    - forbidigo
