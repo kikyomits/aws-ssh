@@ -12,8 +12,8 @@ func main() {
 }
 
 func realMain() int {
-	cmds := commands.RegisteredCommands()
-	err := cmds.Execute()
+	cmds, err := commands.RegisteredCommands()
+	err = cmds.Execute()
 	if err != nil {
 		log.Error("Error executing CLI")
 		return 1

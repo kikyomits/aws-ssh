@@ -16,17 +16,20 @@ const (
 	SSMDocumentAWSStartPortForwardingSession             = "AWS-StartPortForwardingSession"
 )
 
-type ECSService struct {
+type ECSService interface {
+	GetTargetIDByTaskID(ctx context.Context, clusterName, taskID, containerName string) (string, error)
+}
+type ECSSSHService struct {
 	ecs ECSClient
 }
 
-func NewECSService(ecsClient ECSClient) (*ECSService, error) {
-	return &ECSService{
+func NewECSService(ecsClient ECSClient) *ECSSSHService {
+	return &ECSSSHService{
 		ecs: ecsClient,
-	}, nil
+	}
 }
 
-func (c *ECSService) findTaskIDByServiceName(ctx context.Context, serviceName string) (*string, error) {
+func (c *ECSSSHService) findTaskIDByServiceName(ctx context.Context, serviceName string) (*string, error) {
 	input := &ecs.DescribeServicesInput{Services: []string{serviceName}}
 	out, err := c.ecs.DescribeServices(ctx, input)
 	if err != nil {
@@ -42,8 +45,8 @@ func (c *ECSService) findTaskIDByServiceName(ctx context.Context, serviceName st
 		for _, svc := range out.Services {
 			names = append(names, svc.ServiceName)
 		}
-		return nil, errors.New(fmt.Sprintf(
-			"found multiple ECS Services, please provide unique name. found: %v", names))
+		return nil, fmt.Errorf(
+			"found multiple ECS Services, please provide unique name. found: %v", names)
 	}
 
 	log.Debugf("found ECS Service %s", serviceName)
@@ -51,16 +54,16 @@ func (c *ECSService) findTaskIDByServiceName(ctx context.Context, serviceName st
 
 }
 
-func (c *ECSService) findContainerByName(containers []types.Container, name string) (*types.Container, error) {
+func (c *ECSSSHService) findContainerByName(containers []types.Container, name string) (*types.Container, error) {
 	if len(containers) > 1 && name == "" {
 		var names []*string
 		for _, container := range containers {
 			names = append(names, container.Name)
 		}
-		return nil, errors.New(fmt.Sprintf("Need to specify the container name. found: %v", names))
+		return nil, fmt.Errorf("Need to specify the container name. found: %v", names)
 	}
 
-	if len(containers) == 0 && name == "" {
+	if len(containers) == 1 && name == "" {
 		return &containers[0], nil
 	}
 
@@ -69,10 +72,10 @@ func (c *ECSService) findContainerByName(containers []types.Container, name stri
 			return &container, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("cannot find container '%s' in the given task", name))
+	return nil, fmt.Errorf("cannot find container '%s' in the given task", name)
 }
 
-func (c *ECSService) GetECSRuntimeIDByTaskID(ctx context.Context, clusterName, taskID, containerName string) (string, error) {
+func (c *ECSSSHService) GetTargetIDByTaskID(ctx context.Context, clusterName, taskID, containerName string) (string, error) {
 	input := &ecs.DescribeTasksInput{
 		Tasks:   []string{taskID},
 		Cluster: aws.String(clusterName),
@@ -82,18 +85,29 @@ func (c *ECSService) GetECSRuntimeIDByTaskID(ctx context.Context, clusterName, t
 		return "", err
 	}
 
+	var taskArns []string
+	for _, t := range tasks.Tasks {
+		taskArns = append(taskArns, aws.ToString(t.TaskArn))
+	}
+
+	log.WithField("tasks", taskArns).Debugf("found tasks")
 	if len(tasks.Tasks) == 0 {
-		return "", errors.New(fmt.Sprintf("cannot find any tasks by taskID: %s", taskID))
+		return "", fmt.Errorf("cannot find any tasks by taskID: %s", taskID)
 	}
 
 	task := tasks.Tasks[0]
 	containers := task.Containers
+	if len(containers) == 0 {
+		return "", fmt.Errorf("cannot find any containers in taskID: %s", taskID)
+	}
 
 	container, err := c.findContainerByName(containers, containerName)
-
 	if err != nil {
 		return "", err
 	}
-
-	return aws.ToString(container.RuntimeId), nil
+	log.Debugf("found container %s", containerName)
+	runtimeID := aws.ToString(container.RuntimeId)
+	targetID := fmt.Sprintf("ecs:%s_%s_%s", clusterName, taskID, runtimeID)
+	log.Debugf("found container runtime id:%s", runtimeID)
+	return targetID, nil
 }

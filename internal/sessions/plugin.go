@@ -3,7 +3,7 @@ package sessions
 
 import (
 	"github.com/aws/session-manager-plugin/src/datachannel"
-	"github.com/aws/session-manager-plugin/src/log"
+
 	"github.com/aws/session-manager-plugin/src/sessionmanagerplugin/session"
 )
 
@@ -17,26 +17,27 @@ type PluginSessionInput struct {
 	TokenValue  string
 }
 
-func (p *PluginSessionInput) toSession() session.ISession {
-	return &session.Session{
-		ClientId:    p.ClientId,
-		DataChannel: p.DataChannel,
-		Endpoint:    p.Endpoint,
-		SessionId:   p.SessionId,
-		StreamUrl:   p.StreamUrl,
-		TargetId:    p.TargetId,
-		TokenValue:  p.TokenValue,
-	}
+func (p *PluginSessionInput) toSession() *session.Session {
+	sess := new(session.Session)
+	sess.ClientId = p.ClientId
+	sess.DataChannel = p.DataChannel
+	sess.Endpoint = p.Endpoint
+	sess.SessionId = p.SessionId
+	sess.StreamUrl = p.StreamUrl
+	sess.TargetId = p.TargetId
+	sess.TokenValue = p.TokenValue
+	return sess
+	//return &session.Session{
+	//	ClientId:    p.ClientId,
+	//	DataChannel: p.DataChannel,
+	//	Endpoint:    p.Endpoint,
+	//	SessionId:   p.SessionId,
+	//	StreamUrl:   p.StreamUrl,
+	//	TargetId:    p.TargetId,
+	//	TokenValue:  p.TokenValue,
+	//}
 }
 
 type Plugin interface {
 	Execute(in PluginSessionInput) error
-}
-
-type PluginSession struct {
-}
-
-func (p *PluginSession) Execute(in PluginSessionInput) error {
-	ses := in.toSession()
-	return ses.Execute(log.Logger(false, in.ClientId))
 }

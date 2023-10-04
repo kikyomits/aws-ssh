@@ -8,39 +8,41 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/session-manager-plugin/src/datachannel"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type SSMSessionManager struct {
 	plugin Plugin
 	ssm    SSMClient
-	region string
 }
 
-func NewSSMSessionManager(plugin Plugin, ssm SSMClient, region string) (*SSMSessionManager, error) {
+func NewSSMSessionManager(plugin Plugin, ssm SSMClient) *SSMSessionManager {
 	return &SSMSessionManager{
 		plugin: plugin,
 		ssm:    ssm,
-		region: region,
-	}, nil
+	}
 }
 
-// PortForwardingToRemoteHostSession starts a port forwarding sessions using the PortForwardingInput parameters to
-// configure the sessions.  The aws.Config parameter will be used to call the AWS SSM StartSession
-// API, which is used as part of establishing the websocket communication channel.
+// PortForwardingToRemoteHostSession starts a port forwarding sessions using the PortForwardingToRemoteInput parameters to
+// configure the sessions.
 func (c *SSMSessionManager) PortForwardingToRemoteHostSession(opts *PortForwardingToRemoteInput) error {
+	log.Infof("setting up tunnel: 127.0.0.1:%s -> %s:%s", opts.LocalPort, opts.RemoteHost, opts.RemotePort)
 	in := &ssm.StartSessionInput{
 		DocumentName: aws.String(services.SSMDocumentAWSStartPortForwardingSessionToRemoteHost),
 		Target:       aws.String(opts.Target),
 		Parameters: map[string][]string{
 			"localPortNumber": {opts.LocalPort},
 			"portNumber":      {opts.RemotePort},
-			"host":            {opts.Host},
+			"host":            {opts.RemoteHost},
 		},
 	}
-	return c.execute(in)
+	return c.execute(in, opts.Region)
 }
 
+// PortForwardingSession starts a port forwarding sessions using the PortForwardingInput parameters to
+// configure the sessions.
 func (c *SSMSessionManager) PortForwardingSession(opts *PortForwardingInput) error {
+	log.Infof("setting up tunnel: 127.0.0.1:%s -> :%s", opts.LocalPort, opts.RemotePort)
 	in := &ssm.StartSessionInput{
 		DocumentName: aws.String(services.SSMDocumentAWSStartPortForwardingSession),
 		Target:       aws.String(opts.Target),
@@ -49,26 +51,37 @@ func (c *SSMSessionManager) PortForwardingSession(opts *PortForwardingInput) err
 			"portNumber":      {opts.RemotePort},
 		},
 	}
-	return c.execute(in)
+	return c.execute(in, opts.Region)
 }
 
-func (c *SSMSessionManager) execute(input *ssm.StartSessionInput) error {
+func (c *SSMSessionManager) execute(input *ssm.StartSessionInput, region string) error {
 	out, err := c.ssm.StartSession(context.Background(), input)
 	if err != nil {
 		return err
 	}
-	ep, err := ssm.NewDefaultEndpointResolver().ResolveEndpoint(c.region, ssm.EndpointResolverOptions{})
+
+	log.WithFields(map[string]interface{}{
+		"region":    region,
+		"sessionId": aws.ToString(out.SessionId),
+		"streamUrl": aws.ToString(out.StreamUrl),
+	}).Debugf("connecting to stream via AWS SessionManager plugin")
+
+	ep, err := ssm.NewDefaultEndpointResolverV2().ResolveEndpoint(context.Background(), ssm.EndpointParameters{Region: aws.String(region)})
 	if err != nil {
+		log.WithError(err).Errorf("failed to resolve endpoint for plugin")
 		return err
 	}
+
 	pluginInput := PluginSessionInput{
 		ClientId:    uuid.NewString(),
 		DataChannel: &datachannel.DataChannel{},
-		Endpoint:    ep.URL,
+		Endpoint:    ep.URI.String(),
 		SessionId:   *out.SessionId,
 		StreamUrl:   *out.StreamUrl,
 		TargetId:    *input.Target,
 		TokenValue:  *out.TokenValue,
 	}
-	return c.plugin.Execute(pluginInput)
+
+	err = c.plugin.Execute(pluginInput)
+	return err
 }

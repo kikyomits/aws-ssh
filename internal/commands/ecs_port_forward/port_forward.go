@@ -1,9 +1,10 @@
+//go:generate go run go.uber.org/mock/mockgen@v0.3.0 -source=port_forward.go -package=mock -destination=./mock/port_forward_mock.go
 package ecs_port_forward
 
 import (
+	"aws-ssh/internal/commands/factory"
 	"aws-ssh/internal/commands/flags"
 	"aws-ssh/internal/commands/prerun"
-	"aws-ssh/internal/services"
 	"aws-ssh/internal/sessions"
 	"aws-ssh/internal/validation"
 	"context"
@@ -21,7 +22,7 @@ const (
 	containerFlag = "container"
 )
 
-type options struct {
+type ECSPortForwardOptions struct {
 	cluster   string
 	service   string
 	task      string
@@ -29,62 +30,73 @@ type options struct {
 	local     string
 }
 
-func New() *cobra.Command {
-	op := &options{}
+func (c *ECSPortForwardOptions) Validate(f factory.Factory, cmd *cobra.Command, args []string) error {
+	if c.service == "" && c.task == "" {
+		return validation.NewInvalidInputError("You must provide either of 'services' or 'task'")
+	}
+	return nil
+}
+func (c *ECSPortForwardOptions) Run(f factory.Factory, cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+
+	awsConfig, err := f.BuildAWSConfig(ctx)
+	if err != nil {
+		log.WithError(err).Errorf("failed to load aws config")
+		return err
+	}
+
+	ecsService := f.BuildECSService(awsConfig)
+	sessionManager := f.BuildSessionManager(awsConfig)
+
+	log.Infof("connecting to clusrter:%s task:%s container:%s", c.cluster, c.task, c.container)
+	targetId, err := ecsService.GetTargetIDByTaskID(ctx, c.cluster, c.task, c.container)
+	if err != nil {
+		log.WithError(err).Errorf("failed to connect to container")
+		return err
+	}
+
+	locals := strings.Split(c.local, ":")
+	if len(locals) < 2 {
+		return validation.NewInvalidInputError("local must follow the format of LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT")
+	}
+
+	region := cmd.Flags().Lookup(flags.RegionFlag).Value.String()
+	if len(locals) == 2 {
+		return sessionManager.PortForwardingSession(&sessions.PortForwardingInput{
+			Region:     region,
+			Target:     targetId,
+			LocalPort:  locals[0],
+			RemotePort: locals[1],
+		})
+	}
+
+	return sessionManager.PortForwardingToRemoteHostSession(&sessions.PortForwardingToRemoteInput{
+		Region:     region,
+		Target:     targetId,
+		LocalPort:  locals[0],
+		RemoteHost: locals[1],
+		RemotePort: locals[2],
+	})
+}
+
+func New(f factory.Factory) *cobra.Command {
+	op := &ECSPortForwardOptions{}
 	command := &cobra.Command{
-		Use:    "ecs_port_forward",
-		Short:  synopsis,
-		PreRun: prerun.Setup,
-		Long:   help,
+		Use:     "ecs-port-forward",
+		Short:   synopsis,
+		PreRun:  prerun.Setup,
+		Example: "aws-ssh ecs-port-forward --cluster CLUSTER_NAME --local LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT --task TASK_ID",
+		Long:    help,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
-			if op.service == "" && op.task == "" {
-				return validation.NewInvalidInputError("You must provide either of 'services' or 'task'")
-			}
-
-			region := cmd.Flags().Lookup(flags.RegionFlag).Value.String()
-			log.Infof("connecting to clusrter %s task %s container %s", op.cluster, op.task, op.container)
-
-			cfg, err := services.NewAWSConfig(ctx, region)
-			if err != nil {
+			f.Init(
+				cmd.Flags().Lookup(flags.AWSProfileFlag).Value.String(),
+				cmd.Flags().Lookup(flags.RegionFlag).Value.String(),
+			)
+			if err := op.Validate(f, cmd, args); err != nil {
 				return err
 			}
-			e, err := services.NewECSService(cfg)
-			if err != nil {
+			if err := op.Run(f, cmd, args); err != nil {
 				return err
-			}
-
-			targetId, err := e.GetECSRuntimeIDByTaskID(ctx, op.cluster, op.task, op.container)
-			if err != nil {
-				return err
-			}
-			c, err := sessions.NewSSMSessionManager(cfg)
-			if err != nil {
-				return err
-			}
-
-			locals := strings.Split(op.local, ":")
-			if len(locals) < 2 {
-				return validation.NewInvalidInputError("local must follow the format of LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT")
-			} else if len(locals) == 2 {
-				err = c.PortForwardingSession(&sessions.PortForwardingInput{
-					Target:     targetId,
-					LocalPort:  locals[0],
-					RemotePort: locals[1],
-				})
-				if err != nil {
-					return err
-				}
-			} else {
-				err = c.PortForwardingToRemoteHostSession(&sessions.PortForwardingToRemoteInput{
-					Target:     targetId,
-					LocalPort:  locals[0],
-					Host:       locals[1],
-					RemotePort: locals[2],
-				})
-				if err != nil {
-					return err
-				}
 			}
 			return nil
 		},
@@ -136,7 +148,7 @@ func New() *cobra.Command {
 
 const synopsis = "Port forwarding for AWS ECS tasks."
 const help = `
-Usage: aws-ssh ecs_port_forward [options]
+Usage: aws-ssh ecs-port-forward [ECSPortForwardOptions]
 	Forward localPort port to localPort port on task
 	Forward localPort port to a remote host/port accessible from task
  	`
