@@ -1,2 +1,4 @@
 .idea
 mock/*
+coverage.out
+tests.out
