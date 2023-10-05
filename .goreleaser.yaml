@@ -1,16 +1,6 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines bellow are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
     - go generate ./...
 
 builds:
@@ -36,7 +26,7 @@ archives:
   - id: nix
     builds: [macos, linux]
     <<: &archive_defaults
-      name_template: 'name_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+      name_template: 'aws-ssh_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     wrap_in_directory: true
     format: tar.gz
     files:
@@ -55,6 +45,21 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+  groups:
+    - title: 'BREAKING CHANGE'
+      regexp: "(^.*!feat[(\\w)]*:+.*$)|(^.*fix[(\\w)]*:+.*$)"
+      order: 0
+    - title: 'New Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 10
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 20
+    - title: Other work
+      order: 999
 
 checksum:
   name_template: 'checksums.txt'
