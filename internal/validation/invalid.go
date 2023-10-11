@@ -1,7 +1,6 @@
 package validation
 
 type InvalidInput struct {
-	error
 	Message string
 }
 

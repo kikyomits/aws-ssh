@@ -1,7 +1,7 @@
 package sessions
 
 import (
-	"aws-ssh/internal/services"
+	"aws-ssh/internal/ecs_ssh"
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,7 +28,7 @@ func NewSSMSessionManager(plugin Plugin, ssm SSMClient) *SSMSessionManager {
 func (c *SSMSessionManager) PortForwardingToRemoteHostSession(opts *PortForwardingToRemoteInput) error {
 	log.Infof("setting up tunnel: 127.0.0.1:%s -> %s:%s", opts.LocalPort, opts.RemoteHost, opts.RemotePort)
 	in := &ssm.StartSessionInput{
-		DocumentName: aws.String(services.SSMDocumentAWSStartPortForwardingSessionToRemoteHost),
+		DocumentName: aws.String(ecs_ssh.SSMDocumentAWSStartPortForwardingSessionToRemoteHost),
 		Target:       aws.String(opts.Target),
 		Parameters: map[string][]string{
 			"localPortNumber": {opts.LocalPort},
@@ -44,7 +44,7 @@ func (c *SSMSessionManager) PortForwardingToRemoteHostSession(opts *PortForwardi
 func (c *SSMSessionManager) PortForwardingSession(opts *PortForwardingInput) error {
 	log.Infof("setting up tunnel: 127.0.0.1:%s -> :%s", opts.LocalPort, opts.RemotePort)
 	in := &ssm.StartSessionInput{
-		DocumentName: aws.String(services.SSMDocumentAWSStartPortForwardingSession),
+		DocumentName: aws.String(ecs_ssh.SSMDocumentAWSStartPortForwardingSession),
 		Target:       aws.String(opts.Target),
 		Parameters: map[string][]string{
 			"localPortNumber": {opts.LocalPort},

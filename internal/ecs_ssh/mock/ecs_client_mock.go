@@ -78,3 +78,23 @@ func (mr *MockECSClientMockRecorder) DescribeTasks(ctx, params any, optFns ...an
 	varargs := append([]any{ctx, params}, optFns...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeTasks", reflect.TypeOf((*MockECSClient)(nil).DescribeTasks), varargs...)
 }
+
+// ListTasks mocks base method.
+func (m *MockECSClient) ListTasks(ctx context.Context, params *ecs.ListTasksInput, optFns ...func(*ecs.Options)) (*ecs.ListTasksOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range optFns {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListTasks", varargs...)
+	ret0, _ := ret[0].(*ecs.ListTasksOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTasks indicates an expected call of ListTasks.
+func (mr *MockECSClientMockRecorder) ListTasks(ctx, params any, optFns ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, optFns...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTasks", reflect.TypeOf((*MockECSClient)(nil).ListTasks), varargs...)
+}

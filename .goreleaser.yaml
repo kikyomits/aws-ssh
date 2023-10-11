@@ -2,25 +2,23 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
-
 builds:
   - <<: &build_defaults
       binary: bin/aws-ssh
       main: ./cmd/main.go
     id: macos
     goos: [darwin]
-    goarch: [amd64]
+    goarch: [amd64, arm64]
   - <<: *build_defaults
     id: linux
     goos: [linux]
-    goarch: [386, arm, amd64, arm64]
+    goarch: [amd64, arm64]
     env:
       - CGO_ENABLED=0
   - <<: *build_defaults
     id: windows
     goos: [windows]
-    goarch: [386, amd64, arm64]
-
+    goarch: [amd64, arm64]
 
 archives:
   - id: nix

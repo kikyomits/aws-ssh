@@ -18,24 +18,15 @@ type PluginSessionInput struct {
 }
 
 func (p *PluginSessionInput) toSession() *session.Session {
-	sess := new(session.Session)
-	sess.ClientId = p.ClientId
-	sess.DataChannel = p.DataChannel
-	sess.Endpoint = p.Endpoint
-	sess.SessionId = p.SessionId
-	sess.StreamUrl = p.StreamUrl
-	sess.TargetId = p.TargetId
-	sess.TokenValue = p.TokenValue
-	return sess
-	//return &session.Session{
-	//	ClientId:    p.ClientId,
-	//	DataChannel: p.DataChannel,
-	//	Endpoint:    p.Endpoint,
-	//	SessionId:   p.SessionId,
-	//	StreamUrl:   p.StreamUrl,
-	//	TargetId:    p.TargetId,
-	//	TokenValue:  p.TokenValue,
-	//}
+	return &session.Session{
+		ClientId:    p.ClientId,
+		DataChannel: p.DataChannel,
+		Endpoint:    p.Endpoint,
+		SessionId:   p.SessionId,
+		StreamUrl:   p.StreamUrl,
+		TargetId:    p.TargetId,
+		TokenValue:  p.TokenValue,
+	}
 }
 
 type Plugin interface {

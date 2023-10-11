@@ -19,6 +19,8 @@ func RegisteredCommands() (cobra.Command, error) {
 			"and set up port forwarding to remote hosts or ports. It simplifies the process of interacting with containers \n" +
 			"running in ECS clusters, making it easy to manage and troubleshoot containerized applications.",
 		PersistentPreRun: prerun.Setup,
+		SilenceUsage:     true,
+		SilenceErrors:    true,
 	}
 
 	root.AddCommand(ecs_port_forward.New(&factory.AWSFactory{}))
