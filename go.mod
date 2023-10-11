@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
+	github.com/stretchr/testify v1.8.3
 	go.uber.org/mock v0.3.0
 )
 
@@ -38,7 +39,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.3 // indirect
 	github.com/twinj/uuid v0.0.0-20151029044442-89173bcdda19 // indirect
 	github.com/xtaci/smux v1.5.24 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
