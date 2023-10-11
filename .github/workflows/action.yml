@@ -40,8 +40,6 @@ jobs:
       run: make lint
 
   compile:
-#    needs: [ test, lint ]
-    needs: [test]
     name: "Compile"
     runs-on: ubuntu-latest
     steps:
@@ -52,6 +50,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: "Compile executable"
         run: make compile
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
