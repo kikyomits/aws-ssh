@@ -3,7 +3,6 @@
 SERVICE_NAME=aws-ssh
 VERSION_FILE:=./VERSION
 BRANCH:=$(shell git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' | tr '/' '-')
-PKG_PATH=github.com/kikyonmits
 
 
 ## clean up dependencies
