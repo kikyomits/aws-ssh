@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	clusterFlag   = "Cluster"
-	serviceFlag   = "ecs_ssh"
-	taskFlag      = "Task"
-	localFlag     = "Local"
-	containerFlag = "Container"
+	clusterFlag   = "cluster"
+	serviceFlag   = "service"
+	taskFlag      = "task"
+	localFlag     = "local"
+	containerFlag = "container"
 )
 
 type ECSPortForwardOptions struct {
@@ -32,7 +32,7 @@ type ECSPortForwardOptions struct {
 
 func (c *ECSPortForwardOptions) Validate(_ factory.Factory, _ *cobra.Command, _ []string) error {
 	if c.Service == "" && c.Task == "" {
-		return validation.NewInvalidInputError("You must provide either of 'Service' or 'Task'")
+		return validation.NewInvalidInputError("You must provide either of 'service' or 'task'")
 	}
 
 	if c.Service != "" && c.Task != "" {
@@ -89,7 +89,7 @@ func (c *ECSPortForwardOptions) Run(f factory.Factory, cmd *cobra.Command, _ []s
 func (c *ECSPortForwardOptions) getTargetID(ctx context.Context, f factory.Factory, awsConfig aws.Config) (string, error) {
 	ecsService := f.BuildECSService(awsConfig)
 	if c.Service != "" {
-		log.WithField("Service", c.Service).Infof("finding target Task by Service name")
+		log.WithField("service", c.Service).Infof("finding target Task by Service name")
 		targetID, err := ecsService.GetTargetIDByServiceName(ctx, c.Cluster, c.Service, c.Container)
 		if err != nil {
 			log.WithError(err).Errorf("failed to find a Task by Service Name")
