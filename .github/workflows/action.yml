@@ -27,17 +27,17 @@ jobs:
           path: |
             coverage.out
             tests.out
-#  lint:
-#    name: "Lint"
-#    runs-on: ubuntu-latest
-#    steps:
-#    - name: Set up Go
-#      uses: actions/setup-go@v2
-#      with:
-#        go-version: ${{ env.GOLANG_VERSION }}
-#    - uses: actions/checkout@v3
-#    - name: "Run lint"
-#      run: make lint
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GOLANG_VERSION }}
+    - uses: actions/checkout@v3
+    - name: "Run lint"
+      run: make lint
 
   compile:
 #    needs: [ test, lint ]

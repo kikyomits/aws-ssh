@@ -13,6 +13,10 @@ func main() {
 
 func realMain() int {
 	cmds, err := commands.RegisteredCommands()
+	if err != nil {
+		log.Error(err.Error())
+		return 1
+	}
 	err = cmds.Execute()
 	if err != nil {
 		log.Error(err.Error())
