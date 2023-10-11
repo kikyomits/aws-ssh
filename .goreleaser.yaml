@@ -61,3 +61,14 @@ changelog:
 
 checksum:
   name_template: 'checksums.txt'
+
+brews:
+  - name: aws-ssh
+    description: How engineers learn about CLIs
+    homepage: https://github.com/kikyomits/aws-ssh
+    tap:
+      owner: kikyomits
+      name: aws-ssh
+    commit_author:
+      name: kikyomits
+    folder: Formula
