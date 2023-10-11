@@ -19,6 +19,7 @@ Flags:
       --region string    AWS Region
   -v, --verbose          enable verbose logging
 
+Use "aws-ssh [command] --help" for more information about a command.
 ```
 
 ## Features
@@ -29,9 +30,51 @@ Flags:
 
 ## Installation
 
-TBD
+### homebrew
+
+You can install `aws-ssh` via [homebrew](https://brew.sh/).
+
+```shell
+brew tap kikyomits/aws-ssh https://github.com/kikyomits/aws-ssh
+brew install aws-ssh
+```
+
+### Release Page
+
+If you don't have `brew` in your machine, you can download the cli from [Releases](https://github.com/kikyomits/aws-ssh/releases).
+Please find the executable file for your platform.
 
 ## Usage
+
+### Set Up Port Forwarding
+
+To set up port forwarding from a local port to a remote host and port, use the following command:
+
+
+```
+Usage: aws-ssh ecs_ssh-port-forward [ECSPortForwardOptions]
+        Forward localPort port to localPort port on Task
+        Forward localPort port to a remote host/port accessible from Task
+
+Usage:
+  aws-ssh ecs-port-forward [flags]
+
+Examples:
+aws-ssh ecs-port-forward --Cluster CLUSTER_NAME --Local LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT --Task TASK_ID
+
+Flags:
+  -c, --cluster string     ECS Cluster Name
+  -n, --container string   Container name. Required if Task is running more than one Container
+  -h, --help               help for ecs-port-forward
+  -L, --local string       LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT Forward a Local port to a remote address/port
+  -s, --service string     ECS Service Name. If provided, it will search the ECS Service and try to access to an Active Task. Either of Service or Task must be provided.
+  -t, --task string        ECS Task ID. Either of Service or Task must be provided.
+
+Global Flags:
+      --profile string   AWS Profile
+      --region string    AWS Region
+  -v, --verbose          enable verbose logging
+```
 
 ### Execute a Command in an ECS Container
 
@@ -39,37 +82,6 @@ To execute a command inside an ECS container, use the following command:
 
 ```sh
 TBD
-```
-
-
-### Set Up Port Forwarding
-
-To set up port forwarding from a local port to a remote host and port, use the following command:
-
-
-```sh
-Usage: aws-ssh ecs_ssh-port-forward [ECSPortForwardOptions]
-        Forward localPort port to localPort port on task
-        Forward localPort port to a remote host/port accessible from task
-
-Usage:
-  aws-ssh ecs_ssh-port-forward [flags]
-
-Examples:
-aws-ssh ecs_ssh-port-forward --cluster CLUSTER_NAME --local LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT --task TASK_ID
-
-Flags:
-  -c, --cluster string     ECS Cluster Name
-  -n, --container string   Container name. Required if task is running more than one container
-  -h, --help               help for ecs_ssh-port-forward
-  -L, --local string       LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT Forward a local port to a remote address/port
-  -s, --ecs_ssh string    ECS Service Name. If provided, it will search the ECS Service and try to access to an Active task. Either of Service or Task must be provided.
-  -t, --task string        ECS Task ID. Either of Service or Task must be provided.
-
-Global Flags:
-      --profile string   AWS Profile
-      --region string    AWS Region
-  -v, --verbose          enable verbose logging
 ```
 
 ## License
