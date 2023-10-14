@@ -96,7 +96,7 @@ func TestECSSSHService_GetTargetIDByTaskID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			a := mock.NewMockECSAgent(ctrl)
+			a := mock.NewMockECSClient(ctrl)
 			c := ecs_ssh.NewECSService(a)
 			a.EXPECT().GetTask(gomock.Any(), ecs_ssh.GetTaskInput{TaskID: taskID, ClusterName: clusterName}).Return(tt.out(tt.args))
 			got, err := c.GetTargetIDByTaskID(context.Background(), clusterName, taskID, tt.args.containerName)
@@ -127,7 +127,7 @@ func TestECSSSHService_GetTargetIDByServiceName(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		mock         func(m *mock.MockECSAgent)
+		mock         func(m *mock.MockECSClient)
 		listTasksOut func() ([]string, error)
 		getTaskOut   func() (types.Task, error)
 		want         string
@@ -135,23 +135,23 @@ func TestECSSSHService_GetTargetIDByServiceName(t *testing.T) {
 	}{
 		{
 			name: "WHEN successfully list tasks and get task details THEN Should return target id",
-			mock: func(m *mock.MockECSAgent) {
-				m.EXPECT().ListRunningTask(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{taskID}, nil)
+			mock: func(m *mock.MockECSClient) {
+				m.EXPECT().ListRunningTasks(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{taskID}, nil)
 				m.EXPECT().GetTask(gomock.Any(), ecs_ssh.GetTaskInput{TaskID: taskID, ClusterName: clusterName}).Return(task, nil)
 			},
 			want: targetID,
 		},
 		{
 			name: "WHEN failed to list tasks and get task details THEN Should return err",
-			mock: func(m *mock.MockECSAgent) {
-				m.EXPECT().ListRunningTask(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{}, fmt.Errorf("a-err"))
+			mock: func(m *mock.MockECSClient) {
+				m.EXPECT().ListRunningTasks(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{}, fmt.Errorf("a-err"))
 			},
 			wantErr: true,
 		},
 		{
 			name: "WHEN failed to get task details THEN Should return err",
-			mock: func(m *mock.MockECSAgent) {
-				m.EXPECT().ListRunningTask(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{taskID}, nil)
+			mock: func(m *mock.MockECSClient) {
+				m.EXPECT().ListRunningTasks(gomock.Any(), ecs_ssh.ListRunningTasksInput{ServiceName: serviceName, ClusterName: clusterName}).Return([]string{taskID}, nil)
 				m.EXPECT().GetTask(gomock.Any(), ecs_ssh.GetTaskInput{TaskID: taskID, ClusterName: clusterName}).Return(types.Task{}, fmt.Errorf("a-err"))
 			},
 			wantErr: true,
@@ -160,7 +160,7 @@ func TestECSSSHService_GetTargetIDByServiceName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			a := mock.NewMockECSAgent(ctrl)
+			a := mock.NewMockECSClient(ctrl)
 			c := ecs_ssh.NewECSService(a)
 			tt.mock(a)
 

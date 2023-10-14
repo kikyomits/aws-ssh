@@ -85,10 +85,10 @@ func TestECSSSHAgent_GetTask(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			c := mock.NewMockECSClient(ctrl)
+			c := mock.NewMockECS(ctrl)
 			c.EXPECT().DescribeTasks(gomock.Any(), gomock.Any()).Return(tt.arg.describeTasksOutput())
-			a := &ecs_ssh.ECSSSHAgent{
-				Client: c,
+			a := &ecs_ssh.ECSSSHClient{
+				ECS: c,
 			}
 			got, err := a.GetTask(context.Background(), ecs_ssh.GetTaskInput{TaskID: taskID, ClusterName: clusterName})
 			if (err != nil) != tt.wantErr {
@@ -155,10 +155,10 @@ func TestECSSSHAgent_ListRunningTask(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			c := mock.NewMockECSClient(ctrl)
+			c := mock.NewMockECS(ctrl)
 			c.EXPECT().ListTasks(gomock.Any(), gomock.Any()).Return(tt.arg.listTasksOutput())
-			a := &ecs_ssh.ECSSSHAgent{
-				Client: c,
+			a := &ecs_ssh.ECSSSHClient{
+				ECS: c,
 			}
 			got, err := a.ListRunningTasks(context.Background(), ecs_ssh.ListRunningTasksInput{ClusterName: clusterName, ServiceName: "a-service"})
 			if tt.wantErr {

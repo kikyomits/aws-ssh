@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.38.1
 	github.com/aws/session-manager-plugin v0.0.0-20230808183647-dbfa0bfdb04b
 	github.com/google/uuid v1.3.1
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4

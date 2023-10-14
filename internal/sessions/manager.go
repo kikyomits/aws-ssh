@@ -44,7 +44,22 @@ func NewPortForwardingToRemoteInput(region, target, localPort, remoteHost, remot
 	}
 }
 
+type ExecInput struct {
+	Region  string
+	Target  string
+	Command string
+}
+
+func NewExecInput(region, target, command string) *ExecInput {
+	return &ExecInput{
+		Region:  region,
+		Target:  target,
+		Command: command,
+	}
+}
+
 type Manager interface {
+	ExecSession(in *ExecInput) error
 	PortForwardingSession(in *PortForwardingInput) error
 	PortForwardingToRemoteHostSession(in *PortForwardingToRemoteInput) error
 }

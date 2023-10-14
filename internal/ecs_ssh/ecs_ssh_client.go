@@ -10,20 +10,20 @@ import (
 	awsTypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 )
 
-type ECSSSHAgent struct {
-	Client ECSClient
+type ECSSSHClient struct {
+	ECS ECS
 }
 
-func NewECSSSHAgent(client ECSClient) ECSSSHAgent {
-	return ECSSSHAgent{Client: client}
+func NewECSSSHAgent(client ECS) ECSSSHClient {
+	return ECSSSHClient{ECS: client}
 }
 
-func (a *ECSSSHAgent) GetTask(ctx context.Context, in GetTaskInput) (types.Task, error) {
+func (a *ECSSSHClient) GetTask(ctx context.Context, in GetTaskInput) (types.Task, error) {
 	input := &ecs.DescribeTasksInput{
 		Tasks:   []string{in.TaskID},
 		Cluster: aws.String(in.ClusterName),
 	}
-	tasks, err := a.Client.DescribeTasks(ctx, input)
+	tasks, err := a.ECS.DescribeTasks(ctx, input)
 	if err != nil {
 		return types.Task{}, err
 	}
@@ -35,13 +35,13 @@ func (a *ECSSSHAgent) GetTask(ctx context.Context, in GetTaskInput) (types.Task,
 	return types.NewTask(tasks.Tasks[0]), nil
 }
 
-func (a *ECSSSHAgent) ListRunningTasks(ctx context.Context, in ListRunningTasksInput) ([]string, error) {
+func (a *ECSSSHClient) ListRunningTasks(ctx context.Context, in ListRunningTasksInput) ([]string, error) {
 	req := &ecs.ListTasksInput{
 		Cluster:       aws.String(in.ClusterName),
 		ServiceName:   aws.String(in.ServiceName),
 		DesiredStatus: awsTypes.DesiredStatusRunning,
 	}
-	res, err := a.Client.ListTasks(ctx, req)
+	res, err := a.ECS.ListTasks(ctx, req)
 	if err != nil {
 		return []string{}, err
 	}

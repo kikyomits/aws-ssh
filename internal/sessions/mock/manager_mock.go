@@ -38,6 +38,20 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 	return m.recorder
 }
 
+// ExecSession mocks base method.
+func (m *MockManager) ExecSession(in *sessions.ExecInput) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecSession", in)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExecSession indicates an expected call of ExecSession.
+func (mr *MockManagerMockRecorder) ExecSession(in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecSession", reflect.TypeOf((*MockManager)(nil).ExecSession), in)
+}
+
 // PortForwardingSession mocks base method.
 func (m *MockManager) PortForwardingSession(in *sessions.PortForwardingInput) error {
 	m.ctrl.T.Helper()

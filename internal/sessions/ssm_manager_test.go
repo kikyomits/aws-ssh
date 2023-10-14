@@ -64,7 +64,7 @@ func TestSSMSessionManager_PortForwardingSession(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			ssmClient := mock.NewMockSSMClient(ctrl)
+			ssmClient := mock.NewMockSSM(ctrl)
 			plugin := mock.NewMockPlugin(ctrl)
 
 			ssmClient.EXPECT().StartSession(gomock.Any(), gomock.Any()).Return(tt.args.startSessionOutput())
@@ -129,7 +129,7 @@ func TestSSMSessionManager_PortForwardingToRemoteHostSession(t *testing.T) {
 	}
 	for _, tt := range tests {
 		ctrl := gomock.NewController(t)
-		ssmClient := mock.NewMockSSMClient(ctrl)
+		ssmClient := mock.NewMockSSM(ctrl)
 		plugin := mock.NewMockPlugin(ctrl)
 
 		t.Run(tt.name, func(t *testing.T) {

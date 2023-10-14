@@ -6,29 +6,31 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	SSMDocumentAWSStartPortForwardingSessionToRemoteHost = "AWS-StartPortForwardingSessionToRemoteHost"
 	SSMDocumentAWSStartPortForwardingSession             = "AWS-StartPortForwardingSession"
+	SSMStartInteractiveCommand                           = "AWS-StartInteractiveCommand"
 )
 
 type ECSSSHService struct {
-	ecs ECSAgent
+	ecs ECSClient
 }
 
-func NewECSService(ecsAgent ECSAgent) *ECSSSHService {
+func NewECSService(ecsAgent ECSClient) *ECSSSHService {
 	return &ECSSSHService{
 		ecs: ecsAgent,
 	}
 }
 
 func (c *ECSSSHService) GetTargetIDByServiceName(ctx context.Context, clusterName, serviceName, containerName string) (string, error) {
-
+	log.WithField("service", serviceName).Debugf("finding target Task by Service name")
 	arns, err := c.ecs.ListRunningTasks(ctx, ListRunningTasksInput{ClusterName: clusterName, ServiceName: serviceName})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to find a Task by Service Name")
 	}
 
 	arn := arns[0]
@@ -45,17 +47,18 @@ func (c *ECSSSHService) GetTargetIDByServiceName(ctx context.Context, clusterNam
 }
 
 func (c *ECSSSHService) GetTargetIDByTaskID(ctx context.Context, clusterName, taskID, containerName string) (string, error) {
+	log.WithField("task", taskID).Debugf("finding target Task by Task ID")
 
 	task, err := c.ecs.GetTask(ctx, GetTaskInput{ClusterName: clusterName, TaskID: taskID})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to identify a Task")
 	}
 
 	containers := task.Containers
 
 	container, err := c.findContainerByName(containers, containerName)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to identify a Task")
 	}
 
 	runtimeID := container.RuntimeID

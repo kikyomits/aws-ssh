@@ -13,10 +13,10 @@ import (
 
 type SSMSessionManager struct {
 	plugin Plugin
-	ssm    SSMClient
+	ssm    SSM
 }
 
-func NewSSMSessionManager(plugin Plugin, ssm SSMClient) *SSMSessionManager {
+func NewSSMSessionManager(plugin Plugin, ssm SSM) *SSMSessionManager {
 	return &SSMSessionManager{
 		plugin: plugin,
 		ssm:    ssm,
@@ -49,6 +49,17 @@ func (c *SSMSessionManager) PortForwardingSession(opts *PortForwardingInput) err
 		Parameters: map[string][]string{
 			"localPortNumber": {opts.LocalPort},
 			"portNumber":      {opts.RemotePort},
+		},
+	}
+	return c.execute(in, opts.Region)
+}
+
+func (c *SSMSessionManager) ExecSession(opts *ExecInput) error {
+	in := &ssm.StartSessionInput{
+		DocumentName: aws.String(ecs_ssh.SSMStartInteractiveCommand),
+		Target:       aws.String(opts.Target),
+		Parameters: map[string][]string{
+			"command": {opts.Command},
 		},
 	}
 	return c.execute(in, opts.Region)

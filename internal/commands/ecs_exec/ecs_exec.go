@@ -1,4 +1,4 @@
-package ecs_port_forward
+package ecs_exec
 
 import (
 	"aws-ssh/internal/commands/factory"
@@ -18,19 +18,18 @@ const (
 	clusterFlag   = "cluster"
 	serviceFlag   = "service"
 	taskFlag      = "task"
-	localFlag     = "local"
 	containerFlag = "container"
+	commandFlag   = "command"
 )
 
-type ECSPortForwardOptions struct {
+type ECSExecOptions struct {
 	Cluster   string
 	Service   string
 	Task      string
 	Container string
-	Local     string
 }
 
-func (c *ECSPortForwardOptions) Validate(_ factory.Factory, _ *cobra.Command, _ []string) error {
+func (c *ECSExecOptions) Validate(_ factory.Factory, _ *cobra.Command, _ []string) error {
 	if c.Service == "" && c.Task == "" {
 		return validation.NewInvalidInputError("You must provide either of 'service' or 'task'")
 	}
@@ -39,13 +38,9 @@ func (c *ECSPortForwardOptions) Validate(_ factory.Factory, _ *cobra.Command, _ 
 		return validation.NewInvalidInputError("You cannot specify service name and task ID at the same time. Please specify either of them")
 	}
 
-	locals := strings.Split(c.Local, ":")
-	if len(locals) < 2 {
-		return validation.NewInvalidInputError("Local must follow the format of LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT")
-	}
 	return nil
 }
-func (c *ECSPortForwardOptions) Run(f factory.Factory, cmd *cobra.Command, _ []string) error {
+func (c *ECSExecOptions) Run(f factory.Factory, cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	awsConfig, err := f.BuildAWSConfig(ctx)
@@ -61,32 +56,15 @@ func (c *ECSPortForwardOptions) Run(f factory.Factory, cmd *cobra.Command, _ []s
 
 	log.Infof("connecting to clusrter:%s Task:%s Container:%s", c.Cluster, c.Task, c.Container)
 
-	// locals length must be validated in the Validate method
-	locals := strings.Split(c.Local, ":")
 	region, err := cmd.Flags().GetString(flags.RegionFlag)
 	if err != nil {
 		log.WithError(err).Debugf("failed to get region option. ignoring this erro")
 		region = ""
 	}
-	if len(locals) == 2 {
-		return sessionManager.PortForwardingSession(&sessions.PortForwardingInput{
-			Region:     region,
-			Target:     targetID,
-			LocalPort:  locals[0],
-			RemotePort: locals[1],
-		})
-	}
-
-	return sessionManager.PortForwardingToRemoteHostSession(&sessions.PortForwardingToRemoteInput{
-		Region:     region,
-		Target:     targetID,
-		LocalPort:  locals[0],
-		RemoteHost: locals[1],
-		RemotePort: locals[2],
-	})
+	return sessionManager.ExecSession(sessions.NewExecInput(region, targetID, strings.Join(args, " ")))
 }
 
-func (c *ECSPortForwardOptions) getTargetID(ctx context.Context, f factory.Factory, awsConfig aws.Config) (string, error) {
+func (c *ECSExecOptions) getTargetID(ctx context.Context, f factory.Factory, awsConfig aws.Config) (string, error) {
 	ecsService := f.BuildECSService(awsConfig)
 	if c.Service != "" {
 		return ecsService.GetTargetIDByServiceName(ctx, c.Cluster, c.Service, c.Container)
@@ -95,13 +73,13 @@ func (c *ECSPortForwardOptions) getTargetID(ctx context.Context, f factory.Facto
 }
 
 func New(f factory.Factory) *cobra.Command {
-	op := &ECSPortForwardOptions{}
+	op := &ECSExecOptions{}
 	command := &cobra.Command{
-		Use:     "ecs-port-forward",
+		Use:     "ecs-exec [flags] COMMAND",
 		Short:   synopsis,
 		PreRun:  prerun.Setup,
-		Example: "aws-ssh ecs-port-forward --cluster CLUSTER_NAME --local LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT --task TASK_ID",
-		Args:    cobra.NoArgs,
+		Example: "aws-ssh ecs-exec --cluster CLUSTER_NAME --task TASK_ID bash",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			f.Init(
 				cmd.Flags().Lookup(flags.AWSProfileFlag).Value.String(),
@@ -150,17 +128,9 @@ func New(f factory.Factory) *cobra.Command {
 		"",
 		"Container name. Required if Task is running more than one Container",
 	)
-	command.Flags().StringVarP(
-		&op.Local,
-		localFlag,
-		"L",
-		"",
-		"LOCAL_PORT[:REMOTE_ADDR]:REMOTE_PORT "+
-			"Forward a Local port to a remote address/port",
-	)
 
-	command.MarkFlagsRequiredTogether(clusterFlag, localFlag)
+	command.MarkFlagsRequiredTogether(clusterFlag)
 	return command
 }
 
-const synopsis = "Port forwarding for AWS ECS tasks."
+const synopsis = "Execute interactive command in AWS ECS task."

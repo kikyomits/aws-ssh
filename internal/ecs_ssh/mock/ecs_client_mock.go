@@ -9,10 +9,11 @@
 package mock
 
 import (
+	ecs_ssh "aws-ssh/internal/ecs_ssh"
+	types "aws-ssh/internal/ecs_ssh/types"
 	context "context"
 	reflect "reflect"
 
-	ecs "github.com/aws/aws-sdk-go-v2/service/ecs"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,62 +40,32 @@ func (m *MockECSClient) EXPECT() *MockECSClientMockRecorder {
 	return m.recorder
 }
 
-// DescribeServices mocks base method.
-func (m *MockECSClient) DescribeServices(ctx context.Context, params *ecs.DescribeServicesInput, optFns ...func(*ecs.Options)) (*ecs.DescribeServicesOutput, error) {
+// GetTask mocks base method.
+func (m *MockECSClient) GetTask(ctx context.Context, in ecs_ssh.GetTaskInput) (types.Task, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, params}
-	for _, a := range optFns {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DescribeServices", varargs...)
-	ret0, _ := ret[0].(*ecs.DescribeServicesOutput)
+	ret := m.ctrl.Call(m, "GetTask", ctx, in)
+	ret0, _ := ret[0].(types.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DescribeServices indicates an expected call of DescribeServices.
-func (mr *MockECSClientMockRecorder) DescribeServices(ctx, params any, optFns ...any) *gomock.Call {
+// GetTask indicates an expected call of GetTask.
+func (mr *MockECSClientMockRecorder) GetTask(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, params}, optFns...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeServices", reflect.TypeOf((*MockECSClient)(nil).DescribeServices), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTask", reflect.TypeOf((*MockECSClient)(nil).GetTask), ctx, in)
 }
 
-// DescribeTasks mocks base method.
-func (m *MockECSClient) DescribeTasks(ctx context.Context, params *ecs.DescribeTasksInput, optFns ...func(*ecs.Options)) (*ecs.DescribeTasksOutput, error) {
+// ListRunningTasks mocks base method.
+func (m *MockECSClient) ListRunningTasks(ctx context.Context, in ecs_ssh.ListRunningTasksInput) ([]string, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, params}
-	for _, a := range optFns {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DescribeTasks", varargs...)
-	ret0, _ := ret[0].(*ecs.DescribeTasksOutput)
+	ret := m.ctrl.Call(m, "ListRunningTasks", ctx, in)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DescribeTasks indicates an expected call of DescribeTasks.
-func (mr *MockECSClientMockRecorder) DescribeTasks(ctx, params any, optFns ...any) *gomock.Call {
+// ListRunningTasks indicates an expected call of ListRunningTasks.
+func (mr *MockECSClientMockRecorder) ListRunningTasks(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, params}, optFns...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeTasks", reflect.TypeOf((*MockECSClient)(nil).DescribeTasks), varargs...)
-}
-
-// ListTasks mocks base method.
-func (m *MockECSClient) ListTasks(ctx context.Context, params *ecs.ListTasksInput, optFns ...func(*ecs.Options)) (*ecs.ListTasksOutput, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, params}
-	for _, a := range optFns {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ListTasks", varargs...)
-	ret0, _ := ret[0].(*ecs.ListTasksOutput)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListTasks indicates an expected call of ListTasks.
-func (mr *MockECSClientMockRecorder) ListTasks(ctx, params any, optFns ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, params}, optFns...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTasks", reflect.TypeOf((*MockECSClient)(nil).ListTasks), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRunningTasks", reflect.TypeOf((*MockECSClient)(nil).ListRunningTasks), ctx, in)
 }

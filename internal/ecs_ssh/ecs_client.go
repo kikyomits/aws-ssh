@@ -2,14 +2,21 @@
 package ecs_ssh
 
 import (
+	"aws-ssh/internal/ecs_ssh/types"
 	"context"
-
-	"github.com/aws/aws-sdk-go-v2/service/ecs"
 )
 
 type ECSClient interface {
-	DescribeServices(ctx context.Context, params *ecs.DescribeServicesInput, optFns ...func(*ecs.Options)) (*ecs.DescribeServicesOutput, error)
-	DescribeTasks(ctx context.Context, params *ecs.DescribeTasksInput, optFns ...func(*ecs.Options)) (*ecs.DescribeTasksOutput, error)
+	ListRunningTasks(ctx context.Context, in ListRunningTasksInput) ([]string, error)
+	GetTask(ctx context.Context, in GetTaskInput) (types.Task, error)
+}
 
-	ListTasks(ctx context.Context, params *ecs.ListTasksInput, optFns ...func(*ecs.Options)) (*ecs.ListTasksOutput, error)
+type GetTaskInput struct {
+	ClusterName string
+	TaskID      string
+}
+
+type ListRunningTasksInput struct {
+	ClusterName string
+	ServiceName string
 }

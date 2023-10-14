@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"aws-ssh/internal/commands/ecs_exec"
 	"aws-ssh/internal/commands/ecs_port_forward"
 	"aws-ssh/internal/commands/factory"
 	"aws-ssh/internal/commands/flags"
@@ -24,6 +25,7 @@ func RegisteredCommands() (cobra.Command, error) {
 	}
 
 	root.AddCommand(ecs_port_forward.New(&factory.AWSFactory{}))
+	root.AddCommand(ecs_exec.New(&factory.AWSFactory{}))
 	root.PersistentFlags().String(flags.AWSProfileFlag, "", "AWS Profile")
 	root.PersistentFlags().String(flags.RegionFlag, "", "AWS Region")
 	root.PersistentFlags().BoolP(flags.VerboseFlag, "v", false, "enable verbose logging")
