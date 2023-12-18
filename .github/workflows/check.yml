@@ -22,7 +22,7 @@ jobs:
       - name: "Run unit tests"
         run: make test-ci
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: code-coverage-report
